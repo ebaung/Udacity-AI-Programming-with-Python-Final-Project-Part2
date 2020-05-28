@@ -120,9 +120,8 @@ import torch.nn.functional as F
 class Classifier(nn.Module):
     def __init__(self):
         super().__init__()
-        self.fc1 = nn.Linear(25088, 4096)
-        self.fc2 = nn.Linear(4096, 2048)
-        self.fc3 = nn.Linear(2048, 102)
+        self.fc1 = nn.Linear(25088, 1024)
+        self.fc2 = nn.Linear(1024, 102)
         
         # Dropout module with 0.2 drop probability
         self.dropout = nn.Dropout(p=0.2)
@@ -132,12 +131,10 @@ class Classifier(nn.Module):
         x = x.view(x.shape[0], -1)
         
         # Now with dropout
-        x = self.dropout(F.relu(self.fc1(x)))
-        x = self.dropout(F.relu(self.fc2(x)))
-    
+        x = self.dropout(F.relu(self.fc1(x)))    
 
         # output so no dropout here
-        x = F.log_softmax(self.fc3(x), dim=1)
+        x = F.log_softmax(self.fc2(x), dim=1)
         
         return x
     
@@ -155,8 +152,8 @@ model.classifier = Classifier()
 criterion = nn.NLLLoss()
 
 # Only train the classifier parameters, feature parameters are frozen
-#optimizer = optim.Adam(model.classifier.parameters(), lr=0.001)
-optimizer = optim.Adam(model.classifier.parameters(), lr=0.0003)
+optimizer = optim.Adam(model.classifier.parameters(), lr=0.001)
+#optimizer = optim.Adam(model.classifier.parameters(), lr=0.0003)
 
 model.to(device);
 
@@ -248,11 +245,11 @@ torch.save(model.state_dict(), 'checkpoint.pth')
 # TODO: Save the checkpoint 
 checkpoint = {'input_size': 25088,
               'output_size': 102,
-              'pre_trained_network': 'vgg16',
-              'learning_rate': 0.0003,
+              'arch': 'vgg16',
+              'learning_rate': 0.001,
               'batch_size': 64,
-              'classifier' : model.classifier,
-              'epochs': 10,
+              'classifier' : Classifier(),
+              'epochs': 9,
               'optimizer': optimizer.state_dict(),
               'state_dict': model.state_dict(),
               'class_index': model.class_to_idx}
